@@ -11,17 +11,9 @@ const cors = require('cors');
 const path = require('path');
 const https = require('https');
 app.use(bodyParser.json());
-//app.use(cors());
-//app.use(cors({ origin: 'http://waahbiryani.rf.gd' }));
+app.use(cors());
 
 const directoryPath = path.join(__dirname, 'agentsdk');
-// app.use(express.static(directoryPath));
-// const corsOptions = {
-//     origin: 'http://waahbiryani.rf.gd',
-//     credentials: true,            //access-control-allow-credentials:true
-//     optionSuccessStatus: 200
-// }
-// app.use(cors(corsOptions));
 
 
 // Connect to SQLite database
