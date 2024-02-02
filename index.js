@@ -106,7 +106,7 @@ __NV_CV__ = "0";
 
 app.get('/api/userauthentication', (req, res) => {
     const { username, password } = req.query;
-
+    console.log("process.env  ",process.env);
     // Validate user credentials (replace with your authentication logic)
     if (username === 'suresh' && password === 'suresh1') {
 
