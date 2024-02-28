@@ -107,10 +107,10 @@ __NV_CV__ = "0";
 app.post('/api/placedordermail', (req, res) => {
     //console.log("req : ",req.body);
     const { billingform, shippingform, cartitemsinfo } = req.body;
-    console.log("billingform : ", billingform);
-    console.log("shippingform : ", shippingform);
-    console.log("cartitemsinfo : ", cartitemsinfo);
-    console.log("cartitemsinfo : ", cartitemsinfo[0]["productname"]);
+    // console.log("billingform : ", billingform);
+    // console.log("shippingform : ", shippingform);
+    // console.log("cartitemsinfo : ", cartitemsinfo);
+    // console.log("cartitemsinfo : ", cartitemsinfo[0]["productname"]);
     // Create a transporter with your email service provider configuration
     const transporter = nodemailer.createTransport({
         host:'smtp.gmail.com',
