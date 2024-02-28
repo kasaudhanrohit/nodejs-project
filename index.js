@@ -10,6 +10,7 @@ const secretKey = 'your-secret-key';
 const cors = require('cors');
 const path = require('path');
 const https = require('https');
+const nodemailer = require('nodemailer');
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -51,7 +52,7 @@ process.on('exit', () => {
 // Define routes
 app.get('/api/getuserinfodata', (req, res) => {
     let records = [];
-    db.each("SELECT username, password, email FROM users", function (err, row) {
+    db.each("SELECT username, password, email FROM usersinfo", (err, row) => {
         if (err) {
             console.error('Error executing MySQL query:', err);
             res.status(500).send('Internal Server Error');
@@ -103,10 +104,138 @@ __NV_CV__ = "0";
     res.status(200).send(responseText);
 });
 
+app.post('/api/placedordermail', (req, res) => {
+    //console.log("req : ",req.body);
+    const { billingform, shippingform, cartitemsinfo } = req.body;
+    console.log("billingform : ", billingform);
+    console.log("shippingform : ", shippingform);
+    console.log("cartitemsinfo : ", cartitemsinfo);
+    console.log("cartitemsinfo : ", cartitemsinfo[0]["productname"]);
+    // Create a transporter with your email service provider configuration
+    const transporter = nodemailer.createTransport({
+        host:'smtp.gmail.com',
+        port:587,
+        secure:false,
+        requireTLS:true,
+        auth: {
+            user: 'apnaattaflourmill@gmail.com',
+            pass: 'xvyz bqmf iqdd ohgc'
+        }
+    });
+    var htmlContent = `
+    <strong>Billing Address</strong>
+    <table border="1">
+    <tr>
+      <th>Field</th>
+      <th>Value</th>
+    </tr>
+    <tr>
+      <td><strong>Username:</strong></td>
+      <td>${billingform.username}</td>
+    </tr>
+    <tr>
+      <td><strong>Email:</strong></td>
+      <td>${billingform.email}</td>
+    </tr>
+    <tr>
+      <td><strong>Mobile:</strong></td>
+      <td>${billingform.mobile}</td>
+    </tr>
+    <tr>
+      <td><strong>Address:</strong></td>
+      <td>${billingform.address}</td>
+    </tr>
+    <tr>
+      <td><strong>Comment:</strong></td>
+      <td>${billingform.comment}</td>
+    </tr>
+  </table>
+  <br>
+  <strong>Shipping Address</strong>
+    <table border="1">
+    <tr>
+      <th>Field</th>
+      <th>Value</th>
+    </tr>
+    <tr>
+      <td><strong>Username:</strong></td>
+      <td>${shippingform.username}</td>
+    </tr>
+    <tr>
+      <td><strong>Email:</strong></td>
+      <td>${shippingform.email}</td>
+    </tr>
+    <tr>
+      <td><strong>Mobile:</strong></td>
+      <td>${shippingform.mobile}</td>
+    </tr>
+    <tr>
+      <td><strong>Address:</strong></td>
+      <td>${shippingform.address}</td>
+    </tr>
+    <tr>
+      <td><strong>Comment:</strong></td>
+      <td>${shippingform.comment}</td>
+    </tr>
+  </table>
+`;
+    htmlContent +=`<strong>Product Item </strong> <br>`;
+    cartitemsinfo.forEach(element => {
+        htmlContent +=`<table border="1">
+            <tr>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td><strong>Product Type:</strong></td>
+                <td>${element.producttype}</td>
+            </tr>
+            <tr>
+                <td><strong>Product Name : </strong></td>
+                <td>${element.productname}</td>
+            </tr>
+            <tr>
+                <td><strong>CartValue : </strong></td>
+                <td>${element.cartvalue}</td>
+            </tr>
+        </table>`
+    });
+    
+    // Setup email data with unicode symbols
+    const mailOptions = {
+        from: 'apnaattaflourmill@gmail.com',
+        to: 'kasaudhanrohit7@gmail.com',
+        subject: 'Hello from Node.js',
+        text: 'Node.js email testing',
+        html: htmlContent
+    };
 
+    // Send mail with defined transport object
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return console.log(error);
+        }
+        console.log('Message sent: %s', info.messageId);
+        res.json( {"status": "success"});
+    });
+});
 app.get('/api/userauthentication', (req, res) => {
     const { username, password } = req.query;
-    console.log("process.env  ",process.env);
+    const email = "ssss@gmail.com";
+    const stmt = db.prepare('INSERT INTO usersinfo (username, password, email) VALUES (?,?,?)');
+
+    stmt.run(username, password, email, (err) => {
+        if (err) {
+            //res.status(500).send('Internal Server Error');
+            console.error(err.message);
+        } else {
+            console.log(`Inserted user: ${username}`);
+            //res.status(200).send('Success');
+        }
+        
+    });
+    stmt.finalize();
+    //console.log("process.env  ",process.env);
     // Validate user credentials (replace with your authentication logic)
     if (username === 'suresh' && password === 'suresh1') {
 
