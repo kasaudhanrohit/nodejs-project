@@ -36,6 +36,13 @@ db.serialize(() => {
       email TEXT NOT NULL
     )
   `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS happyuserinfotable (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      mobileno TEXT NOT NULL,
+      emailid TEXT NOT NULL
+    )
+  `);
 });
 
 // Close the database connection when the Node.js process exits
@@ -64,20 +71,39 @@ app.get('/api/getuserinfodata', (req, res) => {
     });
 });
 
+app.post('/api/loginvalidationuser', (req, res) => {
+    const { mobileno, emailid } = req.body;
+    const sql = 'SELECT mobileno, emailid FROM happyuserinfotable WHERE mobileno = ? OR emailid = ?';
+    
+    db.all(sql, [mobileno, emailid], (err, rows) => {
+        if (err) {
+            console.error('Error executing MySQL query:', err);
+            res.status(500).send('Internal Server Error');
+            return;
+        }
+        console.log("rows : ", rows);
+        if(rows.length)
+        res.status(200).send('success');
+        else
+        res.status(200).send('fail');
+    });
+});
+
 
 app.post('/api/createuserinfodata', (req, res) => {
-    const { username, password, email } = req.body;
-    console.log("reqbody : ", username);
-    const stmt = db.prepare('INSERT INTO usersinfo (username,password,email) VALUES (?,?,?)');
-    stmt.run(username, password, email, (err) => {
+    const { mobileno, emailid } = req.body;
+    //check if the user already exists.
+    const sql = 'INSERT INTO happyuserinfotable (mobileno, emailid) VALUES (?, ?)';
+    
+    db.run(sql, [mobileno, emailid], function(err) {
         if (err) {
+            console.error('Error inserting data:', err.message);
             res.status(500).send('Internal Server Error');
-            console.error(err.message);
-        } else {
-            console.log(`Inserted user: ${username}`);
-            res.status(200).send('Success');
+            return;
         }
-        stmt.finalize();
+        
+        console.log(`A row has been inserted with rowid ${this.lastID}`);
+        res.status(200).send('success');
     });
 });
 
