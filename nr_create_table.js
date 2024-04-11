@@ -1,5 +1,6 @@
 function method1(db,username) {
-    // Create a table (Example: users)
+    // Create a table (Example: user)
+    console.log("username ",username,"db = ",db);
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS happy_myorder_${username} (
@@ -9,6 +10,7 @@ db.serialize(() => {
       productimgsrc TEXT NOT NULL,
       quantity TEXT NOT NULL,
       price TEXT NOT NULL,
+      discountprice TEXT NOT NULL,
       total TEXT NOT NULL,
       status TEXT NOT NULL
     )
@@ -21,8 +23,8 @@ db.serialize(() => {
         productimgsrc TEXT NOT NULL,
         quantity TEXT NOT NULL,
         price TEXT NOT NULL,
-        total TEXT NOT NULL,
-        status TEXT NOT NULL
+        discountprice TEXT NOT NULL,
+        total TEXT NOT NULL
     )
   `);
 });

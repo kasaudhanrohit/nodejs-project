@@ -26,7 +26,6 @@ const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CR
         console.log(`Connected to SQLite database at ${dbPath}`);
     }
 });
-
 // Create a table (Example: users)
 db.serialize(() => {
     db.run(`
@@ -67,11 +66,9 @@ app.post('/api/loginvalidationuser', (req, res) => {
     
     db.all(sql, [mobileno, emailid], (err, rows) => {
         if (err) {
-            console.error('Error executing MySQL query:', err);
-            res.status(500).send('Internal Server Error');
+            res.status(200).send([{"status":'fail'}]);
             return;
         }
-        console.log("rows : ", rows);
         if(rows.length)
         res.status(200).send([{"status":'success',"username":rows[0]['username'],"mobileno":rows[0]['mobileno'],"emailid":rows[0]['emailid']}]);
         else
@@ -86,10 +83,9 @@ app.post('/api/checkexistinguser', (req, res) => {
     db.all(sql, [mobileno, emailid], (err, rows) => {
         if (err) {
             console.error('Error executing MySQL query:', err);
-            res.status(500).send('Internal Server Error');
+            res.status(200).send([{"status":'fail'}]);
             return;
         }
-        console.log("rows : ", rows);
         if(!rows.length)
         res.status(200).send([{"status":'success'}]);
         else
@@ -97,15 +93,16 @@ app.post('/api/checkexistinguser', (req, res) => {
     });
 });
 
-app.post('/api/getuserorderinfo', (req, res) => {
+app.post('/api/adduserorderinfo', (req, res) => {
     const { username,cartitemsinfo } = req.body;
-    const sql = `INSERT INTO happy_myorder_${username} (orderid,producttype,productname, productimgsrc,quantity,price,total,status) VALUES ( ?, ?, ?,?, ?, ?,?, ?)`;
-    
+    const sql = `INSERT INTO happy_myorder_${username} (orderid,producttype,productname, productimgsrc,quantity,price,discountprice,total,status) VALUES ( ?, ?, ?, ?,?, ?, ?,?, ?)`;
+    const stmt = db.prepare(sql);
    // Insert each object in the JSON array into the table
    cartitemsinfo.forEach(data => {
-    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.total,data.status, function(err) {
+    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice, data.total,data.status, function(err) {
       if (err) {
-        res.status(500).send([{"status":'fail'}]);
+        res.status(200).send([{"status":'fail'}]);
+        return;
       } else {
         res.status(200).send([{"status":'success'}]);
       }
@@ -114,31 +111,64 @@ app.post('/api/getuserorderinfo', (req, res) => {
 
 });
 
-app.post('/api/getusercartinfo', (req, res) => {
+app.post('/api/getuserorderinfo', (req, res) => {
+    const { username } = req.body;
+    const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total, status FROM happy_myorder_${username} `;
+    db.all(sql, (err, rows) => {
+        if (err) {
+            res.status(200).send([{"status":'fail'}]);
+            return;
+        }
+        if(rows.length)
+        res.status(200).send([{"status":'success',"data":rows}]);
+        else
+        res.status(200).send([{"status":'fail'}]);
+    });
+});
+
+
+
+
+app.post('/api/addusercartinfo', (req, res) => {
     const { username,cartitemsinfo } = req.body;
-    const sql = `INSERT INTO happy_mycart_${username} (orderid,producttype,productname, productimgsrc,quantity,price,total,status) VALUES ( ?, ?, ?,?, ?, ?,?, ?)`;
-    
+    const sql = `INSERT INTO happy_mycart_${username} (orderid,producttype,productname, productimgsrc,quantity,price,discountprice,total) VALUES ( ?, ?, ?, ?,?, ?, ?,?, ?)`;
     // Insert each object in the JSON array into the table
+    const stmt = db.prepare(sql);
    cartitemsinfo.forEach(data => {
-    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.total,data.status, function(err) {
+    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice ,data.total, function(err) {
       if (err) {
-        res.status(500).send([{"status":'fail'}]);
+        res.status(200).send([{"status":'fail'}]);
+        return;
       } else {
         res.status(200).send([{"status":'success'}]);
       }
     });
   });
+});
+
+app.post('/api/getusercartinfo', (req, res) => {
+    const { username } = req.body;
+    const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total FROM happy_mycart_${username} `;
+    db.all(sql, [mobileno, emailid], (err, rows) => {
+        if (err) {
+            res.status(200).send([{"status":'fail'}]);
+            return;
+        }
+        if(rows.length)
+        res.status(200).send([{"status":'success',"data":rows}]);
+        else
+        res.status(200).send([{"status":'fail'}]);
+    });
 });
 
 
 app.post('/api/createuserinfodata', (req, res) => {
     const { username,mobileno, emailid } = req.body;
-    const sql = 'INSERT INTO happyuserinfotable (username,mobileno, emailid) VALUES ( ?, ?, ?)';
+    const sql = `INSERT INTO happyuserinfotable (username,mobileno, emailid) VALUES ( ?, ?, ?)`;
     
     db.run(sql, [username , mobileno, emailid], function(err) {
         if (err) {
-            console.error('Error inserting data:', err.message);
-            res.status(500).send([{"status":'fail'}]);
+            res.status(200).send([{"status":'fail'}]);
             return;
         }
         nr_create_table.method1(db,username);
@@ -282,7 +312,7 @@ app.post('/api/placedordermail', (req, res) => {
             </tr>
             <tr>
                 <td><strong>CartValue : </strong></td>
-                <td>${element.cartvalue}</td>
+                <td>${element.quantity}</td>
             </tr>
         </table>`
     });
