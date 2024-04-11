@@ -13,6 +13,7 @@ const https = require('https');
 const nodemailer = require('nodemailer');
 app.use(bodyParser.json());
 app.use(cors());
+const nr_create_table = require('./nr_create_table.js');
 
 const directoryPath = path.join(__dirname, 'agentsdk');
 
@@ -39,6 +40,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS happyuserinfotable (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL,
       mobileno TEXT NOT NULL,
       emailid TEXT NOT NULL
     )
@@ -56,6 +58,98 @@ process.on('exit', () => {
     });
 });
 
+
+
+
+app.post('/api/loginvalidationuser', (req, res) => {
+    const { mobileno, emailid } = req.body;
+    const sql = 'SELECT username , mobileno, emailid FROM happyuserinfotable WHERE mobileno = ? OR emailid = ?';
+    
+    db.all(sql, [mobileno, emailid], (err, rows) => {
+        if (err) {
+            console.error('Error executing MySQL query:', err);
+            res.status(500).send('Internal Server Error');
+            return;
+        }
+        console.log("rows : ", rows);
+        if(rows.length)
+        res.status(200).send([{"status":'success',"username":rows[0]['username'],"mobileno":rows[0]['mobileno'],"emailid":rows[0]['emailid']}]);
+        else
+        res.status(200).send([{"status":'fail'}]);
+    });
+});
+
+app.post('/api/checkexistinguser', (req, res) => {
+    const { mobileno, emailid } = req.body;
+    const sql = 'SELECT username , mobileno FROM happyuserinfotable WHERE mobileno = ? OR username = ?';
+    
+    db.all(sql, [mobileno, emailid], (err, rows) => {
+        if (err) {
+            console.error('Error executing MySQL query:', err);
+            res.status(500).send('Internal Server Error');
+            return;
+        }
+        console.log("rows : ", rows);
+        if(!rows.length)
+        res.status(200).send([{"status":'success'}]);
+        else
+        res.status(200).send([{"status":'fail'}]);
+    });
+});
+
+app.post('/api/getuserorderinfo', (req, res) => {
+    const { username,cartitemsinfo } = req.body;
+    const sql = `INSERT INTO happy_myorder_${username} (orderid,producttype,productname, productimgsrc,quantity,price,total,status) VALUES ( ?, ?, ?,?, ?, ?,?, ?)`;
+    
+   // Insert each object in the JSON array into the table
+   cartitemsinfo.forEach(data => {
+    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.total,data.status, function(err) {
+      if (err) {
+        res.status(500).send([{"status":'fail'}]);
+      } else {
+        res.status(200).send([{"status":'success'}]);
+      }
+    });
+  });
+
+});
+
+app.post('/api/getusercartinfo', (req, res) => {
+    const { username,cartitemsinfo } = req.body;
+    const sql = `INSERT INTO happy_mycart_${username} (orderid,producttype,productname, productimgsrc,quantity,price,total,status) VALUES ( ?, ?, ?,?, ?, ?,?, ?)`;
+    
+    // Insert each object in the JSON array into the table
+   cartitemsinfo.forEach(data => {
+    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.total,data.status, function(err) {
+      if (err) {
+        res.status(500).send([{"status":'fail'}]);
+      } else {
+        res.status(200).send([{"status":'success'}]);
+      }
+    });
+  });
+});
+
+
+app.post('/api/createuserinfodata', (req, res) => {
+    const { username,mobileno, emailid } = req.body;
+    const sql = 'INSERT INTO happyuserinfotable (username,mobileno, emailid) VALUES ( ?, ?, ?)';
+    
+    db.run(sql, [username , mobileno, emailid], function(err) {
+        if (err) {
+            console.error('Error inserting data:', err.message);
+            res.status(500).send([{"status":'fail'}]);
+            return;
+        }
+        nr_create_table.method1(db,username);
+        res.status(200).send([{"status":'success'}]);
+    });
+});
+
+
+
+//below not in use 
+
 // Define routes
 app.get('/api/getuserinfodata', (req, res) => {
     let records = [];
@@ -71,41 +165,7 @@ app.get('/api/getuserinfodata', (req, res) => {
     });
 });
 
-app.post('/api/loginvalidationuser', (req, res) => {
-    const { mobileno, emailid } = req.body;
-    const sql = 'SELECT mobileno, emailid FROM happyuserinfotable WHERE mobileno = ? OR emailid = ?';
-    
-    db.all(sql, [mobileno, emailid], (err, rows) => {
-        if (err) {
-            console.error('Error executing MySQL query:', err);
-            res.status(500).send('Internal Server Error');
-            return;
-        }
-        console.log("rows : ", rows);
-        if(rows.length)
-        res.status(200).send('success');
-        else
-        res.status(200).send('fail');
-    });
-});
 
-
-app.post('/api/createuserinfodata', (req, res) => {
-    const { mobileno, emailid } = req.body;
-    //check if the user already exists.
-    const sql = 'INSERT INTO happyuserinfotable (mobileno, emailid) VALUES (?, ?)';
-    
-    db.run(sql, [mobileno, emailid], function(err) {
-        if (err) {
-            console.error('Error inserting data:', err.message);
-            res.status(500).send('Internal Server Error');
-            return;
-        }
-        
-        console.log(`A row has been inserted with rowid ${this.lastID}`);
-        res.status(200).send('success');
-    });
-});
 
 
 app.get('/realuserinfo', (req, res) => {
