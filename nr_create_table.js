@@ -17,7 +17,7 @@ db.serialize(() => {
   `);
   db.run(`
     CREATE TABLE IF NOT EXISTS happy_mycart_${username} (
-        orderid TEXT NOT NULL,
+        carditemid TEXT NOT NULL,
         producttype TEXT NOT NULL,
         productname TEXT NOT NULL,
         productimgsrc TEXT NOT NULL,

@@ -127,15 +127,13 @@ app.post('/api/getuserorderinfo', (req, res) => {
 });
 
 
-
-
 app.post('/api/addusercartinfo', (req, res) => {
     const { username,cartitemsinfo } = req.body;
-    const sql = `INSERT INTO happy_mycart_${username} (orderid,producttype,productname, productimgsrc,quantity,price,discountprice,total) VALUES ( ?, ?, ?, ?,?, ?, ?,?, ?)`;
+    const sql = `INSERT INTO happy_mycart_${username} (carditemid,producttype,productname, productimgsrc,quantity,price,discountprice,total) VALUES ( ?, ?, ?, ?,?, ?, ?,?)`;
     // Insert each object in the JSON array into the table
     const stmt = db.prepare(sql);
    cartitemsinfo.forEach(data => {
-    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice ,data.total, function(err) {
+    stmt.run(data.carditemid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice ,data.total, function(err) {
       if (err) {
         res.status(200).send([{"status":'fail'}]);
         return;
@@ -146,10 +144,40 @@ app.post('/api/addusercartinfo', (req, res) => {
   });
 });
 
+app.post('/api/deleteusercartinfo', (req, res) => {
+  const { username,carditemid } = req.body;
+  const sql = `DELETE from happy_mycart_${username}  where carditemid= ${carditemid}`;
+   db.run(sql, function(err) {
+    if (err) {
+      res.status(200).send([{"status":'fail'}]);
+      return;
+    }
+    res.status(200).send([{"status":'success'}]);
+   });
+   
+});
+
+app.post('/api/updateusercartinfo', (req, res) => {
+  const { username,carditemid,quantity,total } = req.body;
+  const sql = `UPDATE happy_mycart_${username} SET quantity = ?, total = ? WHERE carditemid = ?`;
+  const params = [quantity, total, carditemid];
+   db.run(sql,params, function(err) {
+    if (err) {
+      res.status(200).send([{"status":'fail'}]);
+      return;
+    }
+    res.status(200).send([{"status":'success'}]);
+   });
+   
+});
+
+
+
+
 app.post('/api/getusercartinfo', (req, res) => {
     const { username } = req.body;
-    const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total FROM happy_mycart_${username} `;
-    db.all(sql, [mobileno, emailid], (err, rows) => {
+    const sql = `SELECT carditemid, producttype, productname, productimgsrc, quantity, price, discountprice, total FROM happy_mycart_${username} `;
+    db.all(sql, (err, rows) => {
         if (err) {
             res.status(200).send([{"status":'fail'}]);
             return;
