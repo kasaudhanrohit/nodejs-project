@@ -192,10 +192,12 @@ app.post('/api/getusercartinfo', (req, res) => {
 
 app.post('/api/createuserinfodata', (req, res) => {
     const { username,mobileno, emailid } = req.body;
+    console.log("11111111111111111111111111111 ",username , mobileno, emailid);
     const sql = `INSERT INTO happyuserinfotable (username,mobileno, emailid) VALUES ( ?, ?, ?)`;
     
     db.run(sql, [username , mobileno, emailid], function(err) {
         if (err) {
+            console.log("err ",err);
             res.status(200).send([{"status":'fail'}]);
             return;
         }
