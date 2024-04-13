@@ -199,6 +199,7 @@ app.post('/api/createuserinfodata', (req, res) => {
             res.status(200).send([{"status":'fail'}]);
             return;
         }
+        
         nr_create_table.method1(db,username);
         res.status(200).send([{"status":'success'}]);
     });
