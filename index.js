@@ -103,11 +103,10 @@ app.post('/api/adduserorderinfo', (req, res) => {
       if (err) {
         res.status(200).send([{"status":'fail'}]);
         return;
-      } else {
-        res.status(200).send([{"status":'success'}]);
-      }
+      } 
     });
   });
+  res.status(200).send([{"status":'success'}]);
 
 });
 
