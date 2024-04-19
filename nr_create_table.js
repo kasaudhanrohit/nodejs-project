@@ -12,9 +12,18 @@ db.serialize(() => {
       price TEXT NOT NULL,
       discountprice TEXT NOT NULL,
       total TEXT NOT NULL,
-      status TEXT NOT NULL
+      status TEXT NOT NULL,
+      ordertime TEXT NOT NULL
     )
   `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS happy_myorderstatus_${username} (
+      orderid TEXT NOT NULL,
+      status TEXT NOT NULL,
+      ordertime TEXT NOT NULL
+    )
+  `);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS happy_mycart_${username} (
         carditemid TEXT NOT NULL,

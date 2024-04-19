@@ -95,11 +95,11 @@ app.post('/api/checkexistinguser', (req, res) => {
 
 app.post('/api/adduserorderinfo', (req, res) => {
     const { username,cartitemsinfo } = req.body;
-    const sql = `INSERT INTO happy_myorder_${username} (orderid,producttype,productname, productimgsrc,quantity,price,discountprice,total,status) VALUES ( ?, ?, ?, ?,?, ?, ?,?, ?)`;
+    const sql = `INSERT INTO happy_myorder_${username} (orderid,producttype,productname, productimgsrc,quantity,price,discountprice,total,status,ordertime) VALUES ( ?, ?, ?, ?,?, ?, ?,?, ?,?)`;
     const stmt = db.prepare(sql);
    // Insert each object in the JSON array into the table
    cartitemsinfo.forEach(data => {
-    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice, data.total,data.status, function(err) {
+    stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice, data.total,data.status,data.ordertime, function(err) {
       if (err) {
         res.status(200).send([{"status":'fail'}]);
         return;
@@ -112,7 +112,7 @@ app.post('/api/adduserorderinfo', (req, res) => {
 
 app.post('/api/getuserorderinfo', (req, res) => {
     const { username } = req.body;
-    const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total, status FROM happy_myorder_${username} `;
+    const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total, status,ordertime FROM happy_myorder_${username} `;
     db.all(sql, (err, rows) => {
         if (err) {
             res.status(200).send([{"status":'fail'}]);
