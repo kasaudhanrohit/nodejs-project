@@ -94,37 +94,82 @@ app.post('/api/checkexistinguser', (req, res) => {
 });
 
 app.post('/api/adduserorderinfo', (req, res) => {
-    const { username,cartitemsinfo } = req.body;
-    const sql = `INSERT INTO happy_myorder_${username} (orderid,producttype,productname, productimgsrc,quantity,price,discountprice,total,status,ordertime) VALUES ( ?, ?, ?, ?,?, ?, ?,?, ?,?)`;
+    const { username,cartitemsinfo ,orderid} = req.body;
+    let sql = `INSERT INTO happy_myorder_${username} (orderid,producttype,productname, productimgsrc,quantity,price,discountprice,total,status,ordertime) VALUES ( ?, ?, ?, ?,?, ?, ?,?, ?,?)`;
     const stmt = db.prepare(sql);
    // Insert each object in the JSON array into the table
    cartitemsinfo.forEach(data => {
     stmt.run(data.orderid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice, data.total,data.status,data.ordertime, function(err) {
       if (err) {
-        res.status(200).send([{"status":'fail'}]);
+        res.status(200).send([{"status":'fail',"error":'Failed to insert into happy_myorder'}]);
         return;
       } 
     });
   });
+  sql = `INSERT INTO happy_myorderstatus_${username} (orderid,status, sellaprvl,onway1,onway2,onway3) VALUES ( ?, ?, ?,?, ?, ?)`;
+  db.run(sql, [orderid , 'in progress', 'approved','','',''], function(err) {
+        if (err) {
+            console.log("err ",err);
+            res.status(200).send([{"status":'fail',"error":'Failed to insert into happy_myorderstatus'}]);
+            return;
+        }
+    });
+
   res.status(200).send([{"status":'success'}]);
 
 });
 
+// app.post('/api/getuserorderinfo', (req, res) => {
+//     const { username } = req.body;
+//     const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total, status,ordertime FROM happy_myorder_${username} `;
+//     db.all(sql, (err, rows) => {
+//         if (err) {
+//             res.status(200).send([{"status":'fail',"error":'Failed to get data from happy_myorder'}]);
+//             return;
+//         }
+//         if(rows.length)
+//         res.status(200).send([{"status":'success',"data":rows}]);
+//         else
+//         res.status(200).send([{"status":'fail',"error":'Failed to get data from happy_myorder'}]);
+//     });
+// });
+
 app.post('/api/getuserorderinfo', (req, res) => {
-    const { username } = req.body;
-    const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total, status,ordertime FROM happy_myorder_${username} `;
-    db.all(sql, (err, rows) => {
-        if (err) {
-            res.status(200).send([{"status":'fail'}]);
-            return;
-        }
-        if(rows.length)
-        res.status(200).send([{"status":'success',"data":rows}]);
-        else
-        res.status(200).send([{"status":'fail'}]);
-    });
+  const { username } = req.body;
+const sql = `
+  SELECT 
+    o.orderid, 
+    o.producttype, 
+    o.productname, 
+    o.productimgsrc, 
+    o.quantity, 
+    o.price, 
+    o.discountprice, 
+    o.total, 
+    o.status AS order_status, 
+    o.ordertime,
+    s.status AS orderstatus_status,
+    s.sellaprvl,
+    s.onway1,
+    s.onway2,
+    s.onway3
+  FROM 
+    happy_myorder_${username} AS o
+  JOIN 
+    happy_myorderstatus_${username} AS s ON o.orderid = s.orderid`;
+
+db.all(sql, (err, rows) => {
+  if (err) {
+    res.status(200).send([{"status":'fail',"error":'Failed to get data from happy_myorder'}]);
+    return;
+  }
+  if(rows.length)
+    res.status(200).send([{"status":'success',"data":rows}]);
+  else
+    res.status(200).send([{"status":'fail',"error":'Failed to get data from happy_myorder'}]);
 });
 
+});
 
 app.post('/api/addusercartinfo', (req, res) => {
     const { username,cartitemsinfo } = req.body;
@@ -134,7 +179,7 @@ app.post('/api/addusercartinfo', (req, res) => {
    cartitemsinfo.forEach(data => {
     stmt.run(data.carditemid, data.producttype, data.productname,data.productimgsrc,data.quantity,data.price,data.discountprice ,data.total, function(err) {
       if (err) {
-        res.status(200).send([{"status":'fail'}]);
+        res.status(200).send([{"status":'fail',"error":'Failed to insert into happy_mycart'}]);
         return;
       } else {
         res.status(200).send([{"status":'success'}]);
@@ -148,7 +193,7 @@ app.post('/api/deleteusercartinfo', (req, res) => {
   const sql = `DELETE from happy_mycart_${username}  where carditemid= ${carditemid}`;
    db.run(sql, function(err) {
     if (err) {
-      res.status(200).send([{"status":'fail'}]);
+      res.status(200).send([{"status":'fail',"error":'Failed to delete happy_mycart'}]);
       return;
     }
     res.status(200).send([{"status":'success'}]);
@@ -162,7 +207,7 @@ app.post('/api/updateusercartinfo', (req, res) => {
   const params = [quantity, total, carditemid];
    db.run(sql,params, function(err) {
     if (err) {
-      res.status(200).send([{"status":'fail'}]);
+      res.status(200).send([{"status":'fail',"error":'Failed to update into happy_mycart'}]);
       return;
     }
     res.status(200).send([{"status":'success'}]);
@@ -184,25 +229,22 @@ app.post('/api/getusercartinfo', (req, res) => {
         if(rows.length)
         res.status(200).send([{"status":'success',"data":rows}]);
         else
-        res.status(200).send([{"status":'fail'}]);
+        res.status(200).send([{"status":'fail',"error":'Failed to get data from  happy_mycart'}]);
     });
 });
 
 
 app.post('/api/createuserinfodata', (req, res) => {
     const { username,mobileno, emailid } = req.body;
-    console.log("11111111111111111111111111111 ",username , mobileno, emailid);
     const sql = `INSERT INTO happyuserinfotable (username,mobileno, emailid) VALUES ( ?, ?, ?)`;
     
     db.run(sql, [username , mobileno, emailid], function(err) {
         if (err) {
             console.log("err ",err);
-            res.status(200).send([{"status":'fail'}]);
+            res.status(200).send([{"status":'fail',"error":'Failed to insert into happyuserinfotable'}]);
             return;
         }
-        console.log("====================");
         nr_create_table.method1(db,username);
-        console.log("++++++++++++++++++++");
         res.status(200).send([{"status":'success'}]);
     });
 });

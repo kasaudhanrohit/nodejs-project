@@ -20,7 +20,10 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS happy_myorderstatus_${username} (
       orderid TEXT NOT NULL,
       status TEXT NOT NULL,
-      ordertime TEXT NOT NULL
+      sellaprvl TEXT NOT NULL,
+      onway1 TEXT NOT NULL,
+      onway2 TEXT NOT NULL,
+      onway3 TEXT NOT NULL
     )
   `);
 
