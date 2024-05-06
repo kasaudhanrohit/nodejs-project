@@ -190,7 +190,11 @@ app.post('/api/addusercartinfo', (req, res) => {
 
 app.post('/api/deleteusercartinfo', (req, res) => {
   const { username,carditemid } = req.body;
-  const sql = `DELETE from happy_mycart_${username}  where carditemid= ${carditemid}`;
+  let sql = `DELETE from happy_mycart_${username}`;
+   if(carditemid != 'all')
+    {
+      sql = sql+`where carditemid= ${carditemid}`;
+    }
    db.run(sql, function(err) {
     if (err) {
       res.status(200).send([{"status":'fail',"error":'Failed to delete happy_mycart'}]);
