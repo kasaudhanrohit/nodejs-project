@@ -37,6 +37,14 @@ db.serialize(() => {
     )
   `);
   db.run(`
+    CREATE TABLE IF NOT EXISTS adminorderstatus (  
+      username TEXT NOT NULL,
+      orderid TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      status TEXT NOT NULL
+    )
+  `);
+  db.run(`
     CREATE TABLE IF NOT EXISTS happyuserinfotable (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL,
@@ -76,6 +84,19 @@ app.post('/api/loginvalidationuser', (req, res) => {
     });
 });
 
+app.post('/api/adminorderstatus', (req, res) => {
+  const { starttime, endtime } = req.body;
+  const sql = 'SELECT * FROM adminorderstatus WHERE timestamp >= ? AND timestamp <= ?';
+  db.all(sql, [starttime,endtime],(err, rows) => {
+      if (err) {
+          res.status(200).send([{"status":'fail'}]);
+          return;
+      }
+      res.status(200).send([{"status":'success',"data":rows}]);
+  });
+});
+
+
 app.post('/api/checkexistinguser', (req, res) => {
     const { mobileno, emailid } = req.body;
     const sql = 'SELECT username , mobileno FROM happyuserinfotable WHERE mobileno = ? OR username = ?';
@@ -114,6 +135,15 @@ app.post('/api/adduserorderinfo', (req, res) => {
             return;
         }
     });
+    let timestamp = orderid.split("_")[1];
+    sql = `INSERT INTO adminorderstatus (username,orderid,timestamp, status ) VALUES ( ?, ?, ?, ?)`;
+    db.run(sql, [username , orderid, timestamp,'in progress'], function(err) {
+          if (err) {
+              console.log("err ",err);
+              res.status(200).send([{"status":'fail',"error":'Failed to insert into happy_myorderstatus'}]);
+              return;
+          }
+      });
 
   res.status(200).send([{"status":'success'}]);
 
