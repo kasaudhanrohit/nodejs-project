@@ -191,11 +191,46 @@ app.post('/api/adminuserorderstatus', (req, res) => {
   let sql = `SELECT * FROM happy_myorderstatus_${username} `;
   if(orderid != '')
     {
-      sql = sql+`where orderid= ${orderid}`;
+      sql = sql+` where orderid= ${orderid}`;
     }
   db.all(sql,(err, rows) => {
       if (err) {
           res.status(200).send([{"status":'fail'}]);
+          return;
+      }
+      res.status(200).send([{"status":'success',"data":rows}]);
+  });
+});
+
+app.post('/api/admindetailuserorderstatus', (req, res) => {
+  const { username ,orderid} = req.body;
+  let sql = ` SELECT o.orderid, 
+    o.producttype, 
+    o.productname, 
+    o.productimgsrc, 
+    o.quantity, 
+    o.price, 
+    o.discountprice, 
+    o.total, 
+    o.status AS order_status, 
+    o.ordertime,
+    s.status AS orderstatus_status,
+    s.sellaprvl,
+    s.onway1,
+    s.onway2,
+    s.onway3
+  FROM 
+    happy_myorder_${username} AS o
+  JOIN 
+    happy_myorderstatus_${username} AS s ON o.orderid = s.orderid`;
+
+  if(orderid != '')
+    {
+      sql = sql+` where o.orderid= ?`;
+    }
+  db.all(sql, [orderid],(err, rows) => {
+      if (err) {
+          res.status(200).send([{"status":'fail',"error": err.message}]);
           return;
       }
       res.status(200).send([{"status":'success',"data":rows}]);
@@ -237,7 +272,7 @@ app.post('/api/deleteusercartinfo', (req, res) => {
   let sql = `DELETE from happy_mycart_${username}`;
    if(carditemid != 'all')
     {
-      sql = sql+`where carditemid= ${carditemid}`;
+      sql = sql+` where carditemid= ${carditemid}`;
     }
    db.run(sql, function(err) {
     if (err) {
