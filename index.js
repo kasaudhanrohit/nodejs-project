@@ -40,8 +40,7 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS adminorderstatus (  
       username TEXT NOT NULL,
       orderid TEXT NOT NULL,
-      timestamp INTEGER NOT NULL,
-      status TEXT NOT NULL
+      timestamp INTEGER NOT NULL
     )
   `);
   db.run(`
@@ -82,18 +81,6 @@ app.post('/api/loginvalidationuser', (req, res) => {
         else
         res.status(200).send([{"status":'fail'}]);
     });
-});
-
-app.post('/api/adminorderstatus', (req, res) => {
-  const { starttime, endtime } = req.body;
-  const sql = 'SELECT * FROM adminorderstatus WHERE timestamp >= ? AND timestamp <= ?';
-  db.all(sql, [starttime,endtime],(err, rows) => {
-      if (err) {
-          res.status(200).send([{"status":'fail'}]);
-          return;
-      }
-      res.status(200).send([{"status":'success',"data":rows}]);
-  });
 });
 
 
@@ -149,20 +136,6 @@ app.post('/api/adduserorderinfo', (req, res) => {
 
 });
 
-// app.post('/api/getuserorderinfo', (req, res) => {
-//     const { username } = req.body;
-//     const sql = `SELECT orderid, producttype, productname, productimgsrc, quantity, price, discountprice, total, status,ordertime FROM happy_myorder_${username} `;
-//     db.all(sql, (err, rows) => {
-//         if (err) {
-//             res.status(200).send([{"status":'fail',"error":'Failed to get data from happy_myorder'}]);
-//             return;
-//         }
-//         if(rows.length)
-//         res.status(200).send([{"status":'success',"data":rows}]);
-//         else
-//         res.status(200).send([{"status":'fail',"error":'Failed to get data from happy_myorder'}]);
-//     });
-// });
 
 app.post('/api/getuserorderinfo', (req, res) => {
   const { username } = req.body;
@@ -200,6 +173,47 @@ db.all(sql, (err, rows) => {
 });
 
 });
+
+app.post('/api/adminorderstatus', (req, res) => {
+  const { starttime, endtime } = req.body;
+  const sql = 'SELECT * FROM adminorderstatus WHERE timestamp >= ? AND timestamp <= ?';
+  db.all(sql, [starttime,endtime],(err, rows) => {
+      if (err) {
+          res.status(200).send([{"status":'fail'}]);
+          return;
+      }
+      res.status(200).send([{"status":'success',"data":rows}]);
+  });
+});
+
+app.post('/api/adminuserorderstatus', (req, res) => {
+  const { username ,orderid} = req.body;
+  let sql = `SELECT * FROM happy_myorderstatus_${username} `;
+  if(orderid != '')
+    {
+      sql = sql+`where orderid= ${orderid}`;
+    }
+  db.all(sql,(err, rows) => {
+      if (err) {
+          res.status(200).send([{"status":'fail'}]);
+          return;
+      }
+      res.status(200).send([{"status":'success',"data":rows}]);
+  });
+});
+
+app.post('/api/adminupdateorderstatus', (req, res) => {
+  const { orderid,status, sellaprvl,onway1,onway2,onway3,username } = req.body;
+  const sql = `UPDATE happy_myorderstatus_${username} SET status = ?, sellaprvl = ? ,onway1 = ?, onway2 = ?,onway3 = ? WHERE orderid = ? `;
+  db.run(sql, [status, sellaprvl,onway1,onway2,onway3,orderid],(err, rows) => {
+      if (err) {
+          res.status(200).send([{"status":'fail'}]);
+          return;
+      }
+      res.status(200).send([{"status":'success',"data":rows}]);
+  });
+});
+
 
 app.post('/api/addusercartinfo', (req, res) => {
     const { username,cartitemsinfo } = req.body;
