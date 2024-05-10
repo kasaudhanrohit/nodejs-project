@@ -40,7 +40,8 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS adminorderstatus (  
       username TEXT NOT NULL,
       orderid TEXT NOT NULL,
-      timestamp INTEGER NOT NULL
+      timestamp INTEGER NOT NULL,
+      status TEXT NOT NULL
     )
   `);
   db.run(`
@@ -114,17 +115,17 @@ app.post('/api/adduserorderinfo', (req, res) => {
       } 
     });
   });
-  sql = `INSERT INTO happy_myorderstatus_${username} (orderid,status, sellaprvl,onway1,onway2,onway3) VALUES ( ?, ?, ?,?, ?, ?)`;
-  db.run(sql, [orderid , 'in progress', 'approved','','',''], function(err) {
+  let timestamp = orderid.split("_")[1];
+  sql = `INSERT INTO happy_myorderstatus_${username} (username,orderid,timestamp,status, sellaprvl,onway1,onway2,onway3) VALUES (?, ?, ?, ?, ?,?, ?, ?)`;
+  db.run(sql, [username,orderid , timestamp,'in progress', 'approved','','',''], function(err) {
         if (err) {
             console.log("err ",err);
             res.status(200).send([{"status":'fail',"error":'Failed to insert into happy_myorderstatus'}]);
             return;
         }
-    });
-    let timestamp = orderid.split("_")[1];
-    sql = `INSERT INTO adminorderstatus (username,orderid,timestamp, status ) VALUES ( ?, ?, ?, ?)`;
-    db.run(sql, [username , orderid, timestamp,'in progress'], function(err) {
+    }); 
+    sql = `INSERT INTO adminorderstatus (username,orderid,timestamp,status ) VALUES ( ?, ?, ?, ?)`;
+    db.run(sql, [username , orderid, timestamp,'pending'], function(err) {
           if (err) {
               console.log("err ",err);
               res.status(200).send([{"status":'fail',"error":'Failed to insert into happy_myorderstatus'}]);
@@ -152,6 +153,7 @@ const sql = `
     o.status AS order_status, 
     o.ordertime,
     s.status AS orderstatus_status,
+    s.username,
     s.sellaprvl,
     s.onway1,
     s.onway2,
@@ -215,6 +217,7 @@ app.post('/api/admindetailuserorderstatus', (req, res) => {
     o.status AS order_status, 
     o.ordertime,
     s.status AS orderstatus_status,
+    s.username,
     s.sellaprvl,
     s.onway1,
     s.onway2,
@@ -226,9 +229,9 @@ app.post('/api/admindetailuserorderstatus', (req, res) => {
 
   if(orderid != '')
     {
-      sql = sql+` where o.orderid= ?`;
+      sql = sql+` where o.orderid='${orderid}'`;
     }
-  db.all(sql, [orderid],(err, rows) => {
+  db.all(sql,(err, rows) => {
       if (err) {
           res.status(200).send([{"status":'fail',"error": err.message}]);
           return;
