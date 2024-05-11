@@ -117,7 +117,7 @@ app.post('/api/adduserorderinfo', (req, res) => {
   });
   let timestamp = orderid.split("_")[1];
   sql = `INSERT INTO happy_myorderstatus_${username} (username,orderid,timestamp,status, sellaprvl,onway1,onway2,onway3) VALUES (?, ?, ?, ?, ?,?, ?, ?)`;
-  db.run(sql, [username,orderid , timestamp,'in progress', 'approved','','',''], function(err) {
+  db.run(sql, [username,orderid , timestamp,'', '','','',''], function(err) {
         if (err) {
             console.log("err ",err);
             res.status(200).send([{"status":'fail',"error":'Failed to insert into happy_myorderstatus'}]);
@@ -193,7 +193,7 @@ app.post('/api/adminuserorderstatus', (req, res) => {
   let sql = `SELECT * FROM happy_myorderstatus_${username} `;
   if(orderid != '')
     {
-      sql = sql+` where orderid= ${orderid}`;
+      sql = sql+` where orderid='${orderid}'`;
     }
   db.all(sql,(err, rows) => {
       if (err) {
@@ -242,8 +242,8 @@ app.post('/api/admindetailuserorderstatus', (req, res) => {
 
 app.post('/api/adminupdateorderstatus', (req, res) => {
   const { orderid,status, sellaprvl,onway1,onway2,onway3,username } = req.body;
-  const sql = `UPDATE happy_myorderstatus_${username} SET status = ?, sellaprvl = ? ,onway1 = ?, onway2 = ?,onway3 = ? WHERE orderid = ? `;
-  db.run(sql, [status, sellaprvl,onway1,onway2,onway3,orderid],(err, rows) => {
+  const sql = `UPDATE happy_myorderstatus_${username} SET status = ?, sellaprvl = ? ,onway1 = ?, onway2 = ?,onway3 = ? WHERE orderid = '${orderid}' `;
+  db.run(sql, [status, sellaprvl,onway1,onway2,onway3],(err, rows) => {
       if (err) {
           res.status(200).send([{"status":'fail'}]);
           return;
